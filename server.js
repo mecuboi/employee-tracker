@@ -156,3 +156,64 @@ ________________________________________________________________
         })
 }
 
+const addRole = () => {
+    let departmentList = [];
+    db.query('SELECT * FROM department', (err, result) => {
+        if (err) throw err;
+        result.forEach (dept => {
+            departmentList.push({name: dept.name, value: dept.id})
+        })
+    })
+    inquirer
+        .prompt([
+            {
+                type: 'input',
+                name: 'newRole',
+                message: 'What is the name of the new role?',
+                validate: newRole => {
+                    if (newRole) {
+                        return true;
+                    } else {
+                        console.log('Please enter a role');
+                        return false;
+                    }
+                }
+            },
+            {
+                type: 'number',
+                name: 'salary',
+                message: 'What is the annual salary of the new role?',
+                validate: salary => {
+                    if ((salary)) {
+                        return true;
+                    } else {
+                        console.log('Please enter a salary figure');
+                        return false;
+                    }
+                }
+            },
+            {
+                type: 'list',
+                name: 'department',
+                message: 'What department does this role belong to?',
+                choices: departmentList
+            }  
+        ])
+        .then((data) => {
+            let params = [data.newRole, data.salary, data.department];
+            let sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`
+
+            db.query(sql, params, (err, result) => {
+                if (err) throw err;
+                console.log(`
+________________________________________________________________
+
+${data.newRole} have been succesfully added 
+________________________________________________________________
+                
+                `)
+                promptQuestion();
+            })
+        })
+}
+
