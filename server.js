@@ -160,8 +160,8 @@ const addRole = () => {
     let departmentList = [];
     db.query('SELECT * FROM department', (err, result) => {
         if (err) throw err;
-        result.forEach (dept => {
-            departmentList.push({name: dept.name, value: dept.id})
+        result.forEach(dept => {
+            departmentList.push({ name: dept.name, value: dept.id })
         })
     })
     inquirer
@@ -197,7 +197,7 @@ const addRole = () => {
                 name: 'department',
                 message: 'What department does this role belong to?',
                 choices: departmentList
-            }  
+            }
         ])
         .then((data) => {
             let params = [data.newRole, data.salary, data.department];
@@ -217,3 +217,85 @@ ________________________________________________________________
         })
 }
 
+const addEmployee = () => {
+    let roleList = [];
+    let managerList = [{ name: 'Employee is a new manager', value: 0 }];
+
+    db.query('SELECT * FROM role', (err, result) => {
+        if (err) throw err;
+        result.forEach(role => {
+            roleList.push({ name: role.title, value: role.id })
+        })
+    })
+
+    db.query('SELECT * FROM employee', (err, result) => {
+        if (err) throw err;
+        result.forEach(employee => {
+            managerList.push({ name: employee.first_name + ' ' + employee.last_name, value: employee.id })
+        })
+    })
+
+    inquirer
+        .prompt([
+            {
+                type: 'input',
+                name: 'first',
+                message: `New employee's first name?`,
+                validate: name => {
+                    if (name) {
+                        return true;
+                    } else {
+                        console.log('Please enter the first name');
+                        return false;
+                    }
+                }
+            },
+            {
+                type: 'input',
+                name: 'last',
+                message: `New employee's last name?`,
+                validate: name => {
+                    if (name) {
+                        return true;
+                    } else {
+                        console.log('Please enter the last name');
+                        return false;
+                    }
+                }
+            },
+            {
+                type: 'list',
+                name: 'role',
+                message: 'What is the role?',
+                choices: roleList
+
+            },
+            {
+                type: 'list',
+                name: 'manager',
+                message: 'Who will be the manager?',
+                choices: managerList
+            }
+        ])
+        .then((data) => {
+            var params = []
+            if (data.manager === 0) {
+                params = [data.first, data.last, data.role, null]
+            } else {
+                params = [data.first, data.last, data.role, data.manager]
+            }
+            let sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`
+
+            db.query(sql, params, (err, result) => {
+                if (err) throw err;
+                console.log(`
+________________________________________________________________
+
+${data.first} ${data.last} have been succesfully added 
+________________________________________________________________
+                
+                `)
+                promptQuestion();
+            })
+        })
+}
