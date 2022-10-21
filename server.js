@@ -85,23 +85,23 @@ const promptQuestion = () => {
             }
 
             if (answer === "View employees by manager") {
-                viewEmployeesByManager();
+                sortBy('manager');
             }
 
             if (answer === "View employees by department") {
-                viewEmployeeByDepartment();
+                sortBy('department');
             }
 
             if (answer === "Delete a department") {
-                deleteDepartment();
+                deleteSql('department');
             }
 
             if (answer === "Delete a role") {
-                deleteRole();
+                deleteSql('role');
             }
 
             if (answer === "Delete an employee") {
-                deleteEmployee();
+                deleteSql('employee');
             }
 
             if (answer === "View total budget of a department") {
@@ -329,7 +329,7 @@ const updateEmployeeRole = () => {
             roleList.push({ name: role.title, value: role.id })
         })
     })
-    
+
     inquirer
         .prompt([
             {
@@ -380,7 +380,7 @@ const updateManager = () => {
             employeeList.push({ name: employee.first_name + ' ' + employee.last_name, value: employee.id })
         })
     })
-    
+
     inquirer
         .prompt([
             {
@@ -423,4 +423,122 @@ ________________________________________________________________
         .catch(err => {
             console.error(err);
         })
+}
+
+const sortBy = (filter) => {
+    let employeeList = [];
+    let departmentList = [];
+
+    db.query('SELECT * FROM department', (err, result) => {
+        if (err) throw err;
+        result.forEach(dept => {
+            departmentList.push({ name: dept.name, value: dept.id })
+        })
+    })
+
+    db.query('SELECT * FROM employee', (err, result) => {
+        if (err) throw err;
+        result.forEach(employee => {
+            employeeList.push({ name: employee.first_name + ' ' + employee.last_name, value: employee.id })
+        })
+    })
+
+    if (filter === 'manager'){
+        inquirer
+        .prompt([
+            {
+                type: 'input',
+                name: 'errorfix',
+                message: `Press enter to continue`,
+            },
+            {
+                type: 'list',
+                name: 'manager',
+                message: `Please select a manager to see the employees under them:`,
+                choices: employeeList
+            }
+        ])
+        .then((data) => {
+            console.log(data);
+            var params = [data.manager]
+            let sql = `SELECT employee.first_name, employee.last_name
+            FROM employee
+            WHERE employee.manager_id = ?`
+
+            db.query(sql, params, (err, result) => {
+                if (err) throw err;
+                if (result) {
+                    console.log(`
+________________________________________________________________
+
+Here is the list:
+________________________________________________________________
+            
+            `)
+            console.table(result)
+                promptQuestion();
+                } else {
+                    console.log(`
+________________________________________________________________
+
+This employee is not a manager
+________________________________________________________________
+                    `)
+                promptQuestion();
+                }
+            })
+        })
+        .catch(err => {
+            console.error(err);
+        })
+    } else if (filter === 'department'){
+        inquirer
+        .prompt([
+            {
+                type: 'input',
+                name: 'errorfix',
+                message: `Press enter to continue`,
+            },
+            {
+                type: 'list',
+                name: 'department',
+                message: `Please select a department to see employees under it:`,
+                choices: departmentList
+            }
+        ])
+        .then((data) => {
+            var params = [data.department]
+            let sql = `SELECT department.name AS department, role.title AS role, employee.first_name, employee.last_name
+            FROM employee, role, department
+            WHERE employee.role_id = role.id
+            AND role.department_id = department.id
+            AND department.id = ?`
+
+            db.query(sql, params, (err, result) => {
+                if (err) throw err;
+                if (result) {
+                    console.log(`
+________________________________________________________________
+
+Here is the list:
+________________________________________________________________
+            
+            `)
+            console.table(result)
+                promptQuestion();
+                } else {
+                    console.log(`
+________________________________________________________________
+
+This department is empty
+________________________________________________________________
+                    `)
+                promptQuestion();
+                }
+            })
+        })
+        .catch(err => {
+            console.error(err);
+        })
+    }
 }
