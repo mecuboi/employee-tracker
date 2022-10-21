@@ -108,7 +108,10 @@ const promptQuestion = () => {
                 viewBudget();
             }
 
-        });
+        })
+        .catch(err => {
+            console.error(err);
+        })
 };
 
 const view = (data) => {
@@ -153,6 +156,9 @@ ________________________________________________________________
                 `)
                 promptQuestion();
             })
+        })
+        .catch(err => {
+            console.error(err);
         })
 }
 
@@ -214,6 +220,9 @@ ________________________________________________________________
                 `)
                 promptQuestion();
             })
+        })
+        .catch(err => {
+            console.error(err);
         })
 }
 
@@ -298,4 +307,67 @@ ________________________________________________________________
                 promptQuestion();
             })
         })
+        .catch(err => {
+            console.error(err);
+        })
 }
+
+const updateEmployeeRole = () => {
+    let employeeList = [];
+    let roleList = [];
+
+    db.query('SELECT * FROM employee', (err, result) => {
+        if (err) throw err;
+        result.forEach(employee => {
+            employeeList.push({ name: employee.first_name + ' ' + employee.last_name, value: employee.id })
+        })
+    })
+
+    db.query('SELECT * FROM role', (err, result) => {
+        if (err) throw err;
+        result.forEach(role => {
+            roleList.push({ name: role.title, value: role.id })
+        })
+    })
+    
+    inquirer
+        .prompt([
+            {
+                type: 'input',
+                name: 'errorfix',
+                message: `Press enter to continue`,
+            },
+            {
+                type: 'list',
+                name: 'employee',
+                message: `Which employee would you like to update the role?`,
+                choices: employeeList
+            },
+            {
+                type: 'list',
+                name: 'role',
+                message: `What would be the new role?`,
+                choices: roleList
+            }
+        ])
+        .then((data) => {
+            let params = [data.role, data.employee]
+            let sql = `UPDATE employee SET role_id = ? WHERE id = ?`
+
+            db.query(sql, params, (err, result) => {
+                if (err) throw err;
+                console.log(`
+________________________________________________________________
+
+The role have been succesfully updated
+________________________________________________________________
+                
+                `)
+                promptQuestion();
+            })
+        })
+        .catch(err => {
+            console.error(err);
+        })
+}
+
