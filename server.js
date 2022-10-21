@@ -371,3 +371,56 @@ ________________________________________________________________
         })
 }
 
+const updateManager = () => {
+    let employeeList = [];
+
+    db.query('SELECT * FROM employee', (err, result) => {
+        if (err) throw err;
+        result.forEach(employee => {
+            employeeList.push({ name: employee.first_name + ' ' + employee.last_name, value: employee.id })
+        })
+    })
+    
+    inquirer
+        .prompt([
+            {
+                type: 'input',
+                name: 'errorfix',
+                message: `Press enter to continue`,
+            },
+            {
+                type: 'list',
+                name: 'employee',
+                message: `Which employee would you like to switch manager?`,
+                choices: employeeList
+            },
+            {
+                type: 'list',
+                name: 'manager',
+                message: `Who is the new manager?`,
+                choices: employeeList
+            }
+        ])
+        .then((data) => {
+            var params = [data.manager, data.employee]
+            if (data.employee === data.manager) {
+                params = [null, data.employee]
+            }
+            let sql = `UPDATE employee SET manager_id = ? WHERE id = ?`
+
+            db.query(sql, params, (err, result) => {
+                if (err) throw err;
+                console.log(`
+________________________________________________________________
+
+The employee's manager have been succesfully updated
+________________________________________________________________
+                
+                `)
+                promptQuestion();
+            })
+        })
+        .catch(err => {
+            console.error(err);
+        })
+}
