@@ -443,56 +443,256 @@ const sortBy = (filter) => {
         })
     })
 
-    if (filter === 'manager'){
+    if (filter === 'manager') {
         inquirer
-        .prompt([
-            {
-                type: 'input',
-                name: 'errorfix',
-                message: `Press enter to continue`,
-            },
-            {
-                type: 'list',
-                name: 'manager',
-                message: `Please select a manager to see the employees under them:`,
-                choices: employeeList
-            }
-        ])
-        .then((data) => {
-            console.log(data);
-            var params = [data.manager]
-            let sql = `SELECT employee.first_name, employee.last_name
+            .prompt([
+                {
+                    type: 'input',
+                    name: 'errorfix',
+                    message: `Press enter to continue`,
+                },
+                {
+                    type: 'list',
+                    name: 'manager',
+                    message: `Please select a manager to see the employees under them:`,
+                    choices: employeeList
+                }
+            ])
+            .then((data) => {
+                console.log(data);
+                var params = [data.manager]
+                let sql = `SELECT employee.first_name, employee.last_name
             FROM employee
             WHERE employee.manager_id = ?`
 
-            db.query(sql, params, (err, result) => {
-                if (err) throw err;
-                if (result) {
-                    console.log(`
+                db.query(sql, params, (err, result) => {
+                    if (err) throw err;
+                    if (result) {
+                        console.log(`
 ________________________________________________________________
 
 Here is the list:
 ________________________________________________________________
             
             `)
-            console.table(result)
-                promptQuestion();
-                } else {
-                    console.log(`
+                        console.table(result)
+                        promptQuestion();
+                    } else {
+                        console.log(`
 ________________________________________________________________
 
 This employee is not a manager
 ________________________________________________________________
                     `)
-                promptQuestion();
-                }
+                        promptQuestion();
+                    }
+                })
             })
-        })
-        .catch(err => {
-            console.error(err);
-        })
-    } else if (filter === 'department'){
+            .catch(err => {
+                console.error(err);
+            })
+    } else if (filter === 'department') {
         inquirer
+            .prompt([
+                {
+                    type: 'input',
+                    name: 'errorfix',
+                    message: `Press enter to continue`,
+                },
+                {
+                    type: 'list',
+                    name: 'department',
+                    message: `Please select a department to see employees under it:`,
+                    choices: departmentList
+                }
+            ])
+            .then((data) => {
+                var params = [data.department]
+                let sql = `SELECT department.name AS department, role.title AS role, employee.first_name, employee.last_name
+            FROM employee, role, department
+            WHERE employee.role_id = role.id
+            AND role.department_id = department.id
+            AND department.id = ?`
+
+                db.query(sql, params, (err, result) => {
+                    if (err) throw err;
+                    if (result) {
+                        console.log(`
+________________________________________________________________
+
+Here is the list:
+________________________________________________________________
+            
+            `)
+                        console.table(result)
+                        promptQuestion();
+                    } else {
+                        console.log(`
+________________________________________________________________
+
+This department is empty
+________________________________________________________________
+                    `)
+                        promptQuestion();
+                    }
+                })
+            })
+            .catch(err => {
+                console.error(err);
+            })
+    }
+}
+
+const deleteSql = (filter) => {
+    let employeeList = [];
+    let departmentList = [];
+    let roleList = [];
+
+    db.query('SELECT * FROM department', (err, result) => {
+        if (err) throw err;
+        result.forEach(dept => {
+            departmentList.push({ name: dept.name, value: dept.id })
+        })
+    })
+
+    db.query('SELECT * FROM role', (err, result) => {
+        if (err) throw err;
+        result.forEach(role => {
+            roleList.push({ name: role.title, value: role.id })
+        })
+    })
+
+    db.query('SELECT * FROM employee', (err, result) => {
+        if (err) throw err;
+        result.forEach(employee => {
+            employeeList.push({ name: employee.first_name + ' ' + employee.last_name, value: employee.id })
+        })
+    })
+
+    if (filter === 'department') {
+        inquirer
+            .prompt([
+                {
+                    type: 'input',
+                    name: 'errorfix',
+                    message: `Press enter to continue`,
+                },
+                {
+                    type: 'list',
+                    name: 'department',
+                    message: `Which department would you like to remove?`,
+                    choices: departmentList
+                }
+            ])
+            .then((data) => {
+                console.log(data);
+                var params = [data.department]
+                let sql = `DELETE FROM department WHERE id = ?`
+
+                db.query(sql, params, (err, result) => {
+                    if (err) throw err;
+
+                    console.log(`
+________________________________________________________________
+
+Department have successfully been deleted
+________________________________________________________________
+            
+            `)
+
+                    promptQuestion();
+
+                })
+            })
+            .catch(err => {
+                console.error(err);
+            })
+    } else if (filter === 'role') {
+        inquirer
+            .prompt([
+                {
+                    type: 'input',
+                    name: 'errorfix',
+                    message: `Press enter to continue`,
+                },
+                {
+                    type: 'list',
+                    name: 'role',
+                    message: `Which role would you like to remove?`,
+                    choices: roleList
+                }
+            ])
+            .then((data) => {
+                var params = [data.role]
+                let sql = `DELETE FROM role WHERE id = ?`
+
+                db.query(sql, params, (err, result) => {
+
+                    if (err) throw err;
+
+                    console.log(`
+________________________________________________________________
+
+Role have successfully been deleted
+________________________________________________________________
+            
+            `)
+                    promptQuestion();
+                })
+            })
+            .catch(err => {
+                console.error(err);
+            })
+    } else if (filter === 'employee') {
+        inquirer
+            .prompt([
+                {
+                    type: 'input',
+                    name: 'errorfix',
+                    message: `Press enter to continue`,
+                },
+                {
+                    type: 'list',
+                    name: 'employee',
+                    message: `Which employee would you like to remove?`,
+                    choices: employeeList
+                }
+            ])
+            .then((data) => {
+                var params = [data.employee]
+                let sql = `DELETE FROM employee WHERE id = ?`
+
+                db.query(sql, params, (err, result) => {
+
+                    if (err) throw err;
+
+                    console.log(`
+________________________________________________________________
+
+Employee have successfully been deleted
+________________________________________________________________
+            
+            `)
+                    promptQuestion();
+                })
+            })
+            .catch(err => {
+                console.error(err);
+            })
+    }
+}
+
+const viewBudget = () => {
+    let departmentList = [];
+
+    db.query('SELECT * FROM department', (err, result) => {
+        if (err) throw err;
+        result.forEach(dept => {
+            departmentList.push({ name: dept.name, value: dept.id })
+        })
+    })
+
+    inquirer
         .prompt([
             {
                 type: 'input',
@@ -502,43 +702,35 @@ ________________________________________________________________
             {
                 type: 'list',
                 name: 'department',
-                message: `Please select a department to see employees under it:`,
+                message: `Which department's budget would you like to see?`,
                 choices: departmentList
             }
         ])
         .then((data) => {
             var params = [data.department]
-            let sql = `SELECT department.name AS department, role.title AS role, employee.first_name, employee.last_name
+            let sql = `SELECT department.name AS department, SUM(role.salary) AS total_budget
             FROM employee, role, department
             WHERE employee.role_id = role.id
             AND role.department_id = department.id
             AND department.id = ?`
 
             db.query(sql, params, (err, result) => {
+
                 if (err) throw err;
-                if (result) {
-                    console.log(`
+
+                console.log(`
 ________________________________________________________________
 
-Here is the list:
+Here is the total budget:
 ________________________________________________________________
             
             `)
-            console.table(result)
+                console.table(result);
+                console.log('\n')
                 promptQuestion();
-                } else {
-                    console.log(`
-________________________________________________________________
-
-This department is empty
-________________________________________________________________
-                    `)
-                promptQuestion();
-                }
             })
         })
         .catch(err => {
             console.error(err);
         })
-    }
 }
