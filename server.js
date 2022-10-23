@@ -116,13 +116,30 @@ const promptQuestion = () => {
 
 const view = (data) => {
     console.log('\nList of departments: \n')
-    let sql = `SELECT * FROM ${data}`
+    var sql = ``
+    if (data === 'department') {
 
+        sql = `SELECT id, name AS department FROM department`   
+
+    } else if (data === 'role') {
+
+        sql = `SELECT role.id, role.title AS role, department.name AS department, role.salary AS salary
+        FROM role
+        LEFT JOIN department ON role.department_id = department.id`
+
+    } else if (data === 'employee') {
+        sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title AS role, department.name AS department, role.salary AS salary, CONCAT(m.first_name , ' ', m.last_name) AS manager
+        FROM employee lEFT JOIN role ON employee.role_id = role.id
+        LEFT JOIN department ON role.department_id = department.id
+        LEFT JOIN employee AS m ON employee.manager_id = m.id`
+    }
+       
     db.query(sql, (err, result) => {
         if (err) throw err;
         console.table(result);
         promptQuestion();
     })
+    
 
 }
 
@@ -459,7 +476,7 @@ const sortBy = (filter) => {
                 }
             ])
             .then((data) => {
-                console.log(data);
+    
                 var params = [data.manager]
                 let sql = `SELECT employee.first_name, employee.last_name
             FROM employee
@@ -585,7 +602,6 @@ const deleteSql = (filter) => {
                 }
             ])
             .then((data) => {
-                console.log(data);
                 var params = [data.department]
                 let sql = `DELETE FROM department WHERE id = ?`
 
@@ -709,10 +725,10 @@ const viewBudget = () => {
         .then((data) => {
             var params = [data.department]
             let sql = `SELECT department.name AS department, SUM(role.salary) AS total_budget
-            FROM employee, role, department
-            WHERE employee.role_id = role.id
-            AND role.department_id = department.id
-            AND department.id = ?`
+            FROM employee 
+            LEFT JOIN role ON employee.role_id = role.id
+            LEFT JOIN department ON role.department_id = department.id
+            WHERE department.id = ?`
 
             db.query(sql, params, (err, result) => {
 

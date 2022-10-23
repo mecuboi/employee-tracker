@@ -33,15 +33,3 @@ CREATE TABLE employee (
 
 );
 
-SELECT department.name AS department, role.title AS role, employee.first_name, employee.last_name
-            FROM employee, role, department
-            WHERE employee.role_id = role.id
-            AND role.department_id = department.id
-            AND department.id = ?
-
-SELECT department.name AS department, SUM(role.salary) AS total_budget
-FROM employee, role, department
-WHERE employee.role_id = role.id
-AND role.department_id = department.id
-AND department.id = ?
-
